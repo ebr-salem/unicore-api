@@ -3,8 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Notification extends Model
 {
@@ -16,15 +14,21 @@ class Notification extends Model
         'related_id',
     ];
 
-
-    public function sender(): BelongsTo
+    /** Notification sender (User) */
+    public function sender()
     {
         return $this->belongsTo(User::class, 'sender_id');
     }
 
-    // Users who received this notification
-    public function userNotifications(): HasMany
+    /** Connect Notification → User(s) */
+    public function userNotifications()
     {
         return $this->hasMany(UserNotification::class);
+    }
+
+    /** Polymorphic relation: link to lecture / task / quiz / post… */
+    public function related()
+    {
+        return $this->morphTo(null, 'related_type', 'related_id');
     }
 }

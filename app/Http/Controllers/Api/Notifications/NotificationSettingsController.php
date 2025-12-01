@@ -1,48 +1,40 @@
 <?php
-
 namespace App\Http\Controllers\Api\Notifications;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
 use App\Models\NotificationSetting;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 class NotificationSettingsController extends Controller
 {
-    /** GET     /notification-settings */
-    public function index()
+    public function show(Request $request)
     {
-        $user = Auth::user();
-
-        $settings = NotificationSetting::firstOrCreate(
-            ['user_id' => $user->id],
-            ['receive_notifications' => true]
-        );
+        $settings = NotificationSetting::firstOrCreate([
+            'user_id' => $request->user()->id,
+        ]);
 
         return response()->json([
-            'success' => true,
-            'data' => $settings
+            'message'  => 'Notification settings retrieved successfully',
+            'settings' => $settings,
         ]);
+
     }
 
-    /** PUT     /notification-settings */
     public function update(Request $request)
     {
-        $user = Auth::user();
-
         $request->validate([
-            'receive_notifications' => 'required|boolean'
+            'receive_notifications' => 'required|boolean',
         ]);
 
         $settings = NotificationSetting::updateOrCreate(
-            ['user_id' => $user->id],
+            ['user_id' => $request->user()->id],
             ['receive_notifications' => $request->receive_notifications]
         );
 
         return response()->json([
-            'success' => true,
-            'message' => 'Notification settings updated',
-            'data' => $settings
+            'message'  => 'Notification settings updated successfully',
+            'settings' => $settings,
         ]);
+
     }
 }

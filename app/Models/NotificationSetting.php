@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class NotificationSetting extends Model
 {
@@ -12,12 +11,7 @@ class NotificationSetting extends Model
         'receive_notifications',
     ];
 
-    protected $casts = [
-        'receive_notifications' => 'boolean',
-    ];
-
-    // Each setting belongs to a user 
-    public function user(): BelongsTo
+    public function user()
     {
         return $this->belongsTo(User::class);
     }

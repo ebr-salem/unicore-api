@@ -1,65 +1,103 @@
 <?php
-
 namespace App\Http\Controllers\Api\Notifications;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\Notification;
 use App\Models\UserNotification;
-use Illuminate\Support\Facades\Auth;
+use App\Services\NotificationService;
+use Illuminate\Http\Request;
 
 class NotificationController extends Controller
 {
-    /** GET    /notifications */
-    public function index()
+    protected $service;
+
+    public function __construct(NotificationService $service)
     {
-        $user = Auth::user();
-
-        $notifications = UserNotification::with('notification.sender')
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
-            ->get();
-
-        return response()->json([
-            'success' => true,
-            'data' => $notifications
-        ]);
+        $this->service = $service;
     }
 
-    /** PATCH   /notifications/{notification_id}/read */
-    public function markAsRead($id)
+    /**
+     * GET /notifications
+     * List all notifications for user
+     */
+    public function index(Request $request)
     {
-        $user = Auth::user();
-
-        $userNotification = UserNotification::where('user_id', $user->id)
-            ->where('notification_id', $id)
-            ->firstOrFail();
-
-        $userNotification->update([
-            'is_read' => true,
-            'read_at' => now()
-        ]);
+        $notifications = $this->service->getUserNotifications($request->user());
 
         return response()->json([
-            'success' => true,
-            'message' => 'Notification marked as read'
+            'message'       => 'User notifications retrieved successfully',
+            'notifications' => $notifications,
         ]);
+
     }
 
-    /** PATCH   /notifications/read-all */
-    public function markAllAsRead()
+    /**
+     * GET /notifications/unread-count
+     */
+    public function unreadCount(Request $request)
     {
-        $user = Auth::user();
-
-        UserNotification::where('user_id', $user->id)
-            ->update([
-                'is_read' => true,
-                'read_at' => now()
-            ]);
+        $count = UserNotification::where('user_id', $request->user()->id)
+            ->where('is_read', false)
+            ->count();
 
         return response()->json([
-            'success' => true,
-            'message' => 'All notifications marked as read'
+            'message'      => 'Unread notifications count retrieved',
+            'unread_count' => $count,
         ]);
+
+    }
+
+    /**
+     * PATCH /notifications/{user_notification_id}/read
+     */
+    public function markRead(Request $request, $id)
+    {
+        $this->service->markAsRead($request->user(), $id);
+
+        return response()->json([
+            'message' => 'Notification marked as read for this user',
+        ]);
+
+    }
+
+    /**
+     * PATCH /notifications/read-all
+     */
+    public function markAllRead(Request $request)
+    {
+        $this->service->markAllAsRead($request->user());
+
+        return response()->json([
+            'message' => 'All notifications marked as read for this user',
+        ]);
+
+    }
+
+    /**
+     * DELETE /notifications/{user_notification_id}
+     */
+    public function destroy(Request $request, $id)
+    {
+        UserNotification::where('user_id', $request->user()->id)
+            ->where('id', $id)
+            ->delete();
+
+        return response()->json([
+            'message' => 'Notification deleted for this user',
+        ]);
+
+    }
+
+    /**
+     * DELETE /notifications
+     */
+    public function destroyAll(Request $request)
+    {
+        UserNotification::where('user_id', $request->user()->id)
+            ->delete();
+
+        return response()->json([
+            'message' => 'All notifications deleted for this user',
+        ]);
+
     }
 }

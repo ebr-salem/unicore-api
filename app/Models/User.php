@@ -9,8 +9,8 @@ use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-
-    use HasApiTokens, HasFactory, Notifiable;
+    /** @use HasFactory<\Database\Factories\UserFactory> */
+    use HasFactory, Notifiable, HasApiTokens;
 
     /**
      * The attributes that are mass assignable.
@@ -33,33 +33,27 @@ class User extends Authenticatable
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-        'password'          => 'hashed',
-    ];
-
     /**
-     * Notifications received by the user
+     * Get the attributes that should be cast.
+     *
+     * @return array<string, string>
      */
-    public function userNotifications()
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password'          => 'hashed',
+        ];
+    }
+
+    public function notifications()
     {
         return $this->hasMany(UserNotification::class);
     }
 
-    /**
-     * User notification settings (one row for each user)
-     */
-    public function notificationSetting()
+    public function notificationSettings()
     {
         return $this->hasOne(NotificationSetting::class);
-    }
-
-    /**
-     * Notifications sent by this user (doctor,assistant, ..)
-     */
-    public function sentNotifications()
-    {
-        return $this->hasMany(Notification::class, 'sender_id');
     }
 
 }
